@@ -17,17 +17,17 @@ vector<T> arange(T start, T stop, T step = 1) {
 
 pair<Mat, Mat> meshgrid(Mat& x,Mat& y)
 {
-  Mat X = x.clone();
-  X = X.reshape(0, 1);
-  Mat Y = y.clone();
-  Y = Y.reshape(0, 1);
-  int numRows = Y.size().width, numCols = X.size().width;
-  for (int i = 0; i < numRows-1; ++i)
+    Mat X = x.clone();
+    X = X.reshape(0, 1);
+    Mat Y = y.clone();
+    Y = Y.reshape(0, 1);
+    int numRows = Y.size().width, numCols = X.size().width;
+    for (int i = 0; i < numRows-1; ++i)
     X.push_back(X.row(i));
-  for (int i = 0; i < numCols-1; ++i)
+    for (int i = 0; i < numCols-1; ++i)
     Y.push_back(Y.row(i));
-  transpose(Y, Y);
-  return make_pair(X, Y);
+    transpose(Y, Y);
+    return make_pair(X, Y);
 }
 
 pair<float, vector<int> > resize_image(Mat& image, int min_dim, int max_dim){
@@ -69,82 +69,86 @@ vector<float> mold_image(Mat& image, Config config)
 Mat generate_anchors(int scale, pair<int, int> shape,
                      int feature_stride, Config config)
 {
-  Mat scales(1, sizeof(config.RPN_ANCHOR_RATIOS)/ sizeof(int),
+    Mat scales(1, sizeof(config.RPN_ANCHOR_RATIOS)/ sizeof(int),
              CV_32FC1,Scalar(scale));
-  Mat ratios(1, sizeof(config.RPN_ANCHOR_RATIOS)/ sizeof(int),
+    Mat ratios(1, sizeof(config.RPN_ANCHOR_RATIOS)/ sizeof(int),
              CV_32FC1, &config.RPN_ANCHOR_RATIOS);
 
-  Mat sqrt_ratios;
-  sqrt(ratios, sqrt_ratios);
-  Mat heights;
-  divide(scales, sqrt_ratios, heights);
-  Mat widths;
-  multiply(scales, sqrt_ratios, widths);
+    Mat sqrt_ratios;
+    sqrt(ratios, sqrt_ratios);
+    Mat heights;
+    divide(scales, sqrt_ratios, heights);
+    Mat widths;
+    multiply(scales, sqrt_ratios, widths);
 
-  //Enumerate shifts in feature space
-  //shifts_y = np.arange(0, shape.first, anchor_stride) * feature_stride
-  //shifts_x = np.arange(0, shape.second, anchor_stride) * feature_stride
-  //shifts_x, shifts_y = np.meshgrid(shifts_x, shifts_y)
-  auto range_y = arange((float) 0.0,(float) shape.first, (float) config.RPN_ANCHOR_STRIDE);
-  Mat mat_range_y(1, range_y.size(), CV_32FC1, range_y.data());
-  auto range_x = arange((float) 0.0,(float) shape.second, (float) config.RPN_ANCHOR_STRIDE);
-  Mat mat_range_x(1, range_x.size(), CV_32FC1, range_x.data());
-  auto shifts_mesh = meshgrid(mat_range_x, mat_range_y);
-  // cout<<"shifts_x size: "<<shifts_mesh.first.size()<<endl;
-  // cout<<"shifts_y size: "<<shifts_mesh.second.size()<<endl;
-  // float a[3][4]={{1,2,3,4},{5,6,7,8},{9,10,11,12}};
-  // float b[3]={1,2,3};
-  // Mat mat_a(3, 4, CV_32FC1, &a);
-  // Mat mat_b(1, 3, CV_32FC1, &b);
-  // cout<<"***check begin***";
-  // auto mesh_check = meshgrid(mat_b, mat_a);
-  // cout<<mesh_check.first<<endl;
-  // cout<<mesh_check.second<<endl;
-  //Enumerate combinations of shifts, widths, and heights
-  //box_widths, box_centers_x = np.meshgrid(widths, shifts_x)
-  //box_heights, box_centers_y = np.meshgrid(heights, shifts_y)
-  auto box_widths_centers_x = meshgrid(widths, shifts_mesh.first);
-  auto box_heights_centers_y = meshgrid(heights, shifts_mesh.second);
-  // cout<<"widths size: "<<widths.size()<<endl;
-  // cout<<"shifts_x size: "<<shifts_mesh.first.size()<<endl;
-  // cout<<"box_widths size: "<<box_widths_centers_x.first.size()<<endl;
-  // cout<<"box_centers_x size: "<<box_widths_centers_x.second.size()<<endl;
-  // cout<<"box_heights size: "<<box_heights_centers_y.first.size()<<endl;
-  // cout<<"box_centers_y size: "<<box_heights_centers_y.second.size()<<endl;
-  //Reshape to get a list of (y, x) and a list of (h, w)
-  //box_centers = np.stack(
-  //    [box_centers_y, box_centers_x], axis=2).reshape([-1, 2])
-  //box_sizes = np.stack([box_heights, box_widths], axis=2).reshape([-1, 2])
-  Mat box_centers;
-  vconcat(box_heights_centers_y.second.reshape(1,1),
+    //Enumerate shifts in feature space
+    //shifts_y = np.arange(0, shape.first, anchor_stride) * feature_stride
+    //shifts_x = np.arange(0, shape.second, anchor_stride) * feature_stride
+    //shifts_x, shifts_y = np.meshgrid(shifts_x, shifts_y)
+    vector<float> range_y = arange((float) 0.0,(float) shape.first, (float) config.RPN_ANCHOR_STRIDE);
+    Mat mat_range_y(1, range_y.size(), CV_32FC1, range_y.data());
+    vector<float> range_x = arange((float) 0.0,(float) shape.second, (float) config.RPN_ANCHOR_STRIDE);
+    Mat mat_range_x(1, range_x.size(), CV_32FC1, range_x.data());
+    pair<Mat, Mat> shifts_mesh = meshgrid(mat_range_x, mat_range_y);
+    // cout<<"shifts_x size: "<<shifts_mesh.first.size()<<endl;
+    // cout<<"shifts_y size: "<<shifts_mesh.second.size()<<endl;
+    // float a[3][4]={{1,2,3,4},{5,6,7,8},{9,10,11,12}};
+    // float b[3]={1,2,3};
+    // Mat mat_a(3, 4, CV_32FC1, &a);
+    // Mat mat_b(1, 3, CV_32FC1, &b);
+    // cout<<"***check begin***";
+    // auto mesh_check = meshgrid(mat_b, mat_a);
+    // cout<<mesh_check.first<<endl;
+    // cout<<mesh_check.second<<endl;
+    //Enumerate combinations of shifts, widths, and heights
+    //box_widths, box_centers_x = np.meshgrid(widths, shifts_x)
+    //box_heights, box_centers_y = np.meshgrid(heights, shifts_y)
+    pair<Mat, Mat> box_widths_centers_x = meshgrid(widths, shifts_mesh.first);
+    pair<Mat, Mat> box_heights_centers_y = meshgrid(heights, shifts_mesh.second);
+    // cout<<"widths size: "<<widths.size()<<endl;
+    // cout<<"shifts_x size: "<<shifts_mesh.first.size()<<endl;
+    // cout<<"box_widths size: "<<box_widths_centers_x.first.size()<<endl;
+    // cout<<"box_centers_x size: "<<box_widths_centers_x.second.size()<<endl;
+    // cout<<"box_heights size: "<<box_heights_centers_y.first.size()<<endl;
+    // cout<<"box_centers_y size: "<<box_heights_centers_y.second.size()<<endl;
+    //Reshape to get a list of (y, x) and a list of (h, w)
+    //box_centers = np.stack(
+    //    [box_centers_y, box_centers_x], axis=2).reshape([-1, 2])
+    //box_sizes = np.stack([box_heights, box_widths], axis=2).reshape([-1, 2])
+    Mat box_centers;
+    vconcat(box_heights_centers_y.second.reshape(1,1),
           box_widths_centers_x.second.reshape(1,1), box_centers);
-  Mat box_sizes;
-  vconcat(box_heights_centers_y.first.reshape(1,1),
+    Mat box_sizes;
+    vconcat(box_heights_centers_y.first.reshape(1,1),
           box_widths_centers_x.first.reshape(1,1), box_sizes);
-  cout<<"box_centers shape: "<<box_centers.size()
+    cout<<"box_centers shape: "<<box_centers.size()
       <<"box_sizes shape: "<<box_sizes.size()<<endl;
-  Mat boxes;
-  vconcat(box_centers - 0.5 * box_sizes, box_centers + 0.5 * box_sizes, boxes);
-  // Convert to corner coordinates (y1, x1, y2, x2)
-  // boxes = np.concatenate([box_centers - 0.5 * box_sizes,
-  //                         box_centers + 0.5 * box_sizes], axis=1)
-  cout<<"boxes shape: "<<boxes.size()<<endl;
 
-  return scales;
+    // Convert to corner coordinates (y1, x1, y2, x2)
+    // boxes = np.concatenate([box_centers - 0.5 * box_sizes,
+    //                         box_centers + 0.5 * box_sizes], axis=1)
+    Mat boxes;
+    vconcat(box_centers - 0.5 * box_sizes, box_centers + 0.5 * box_sizes, boxes);
+    cout<<"boxes shape: "<<boxes.size()<<endl;
+
+    return boxes;
 }
 
 Mat generate_pyramid_anchors(Config config, vector<pair<int, int> > backbone_shapes)
 {
-  Mat anchors(0,4,CV_32FC1);
-  cout<<sizeof(config.RPN_ANCHOR_SCALES)<<endl;
-  for (int i = 0; i < sizeof(config.RPN_ANCHOR_SCALES)/ sizeof(int); ++i)
-  {
-    //Mat anchor =
-    generate_anchors(config.RPN_ANCHOR_SCALES[i], backbone_shapes[i],
-                     config.BACKBONE_STRIDES[i], config);
-    //anchors.push_back(anchor);
-  }
-  return anchors;
+    Mat anchors;
+    cout<<sizeof(config.RPN_ANCHOR_SCALES)<<endl;
+    for (int i = 0; i < sizeof(config.RPN_ANCHOR_SCALES)/ sizeof(int); ++i)
+    {
+        Mat anchor = generate_anchors(config.RPN_ANCHOR_SCALES[i], backbone_shapes[i],
+                         config.BACKBONE_STRIDES[i], config);
+        cout<<"Anchors Size: "<<anchors.size()<<endl;
+        cout<<"Anchor Size: "<<anchor.size()<<endl;
+        if (i == 0) anchors = anchor.clone();
+        else hconcat(anchors, anchor, anchors);
+        //anchors.push_back(anchor);
+    }
+    return anchors;
 }
 
 /*
@@ -187,7 +191,7 @@ def generate_anchors(scales, ratios, shape, feature_stride, anchor_stride):
     return boxes
 */
 
-void get_anchors(int img_height, int img_width, Config config)
+Mat get_anchors(int img_height, int img_width, Config config)
 {
     vector<pair<int, int> > backbone_shapes;
     for (int i = 0; i < sizeof(config.BACKBONE_STRIDES)/ sizeof(int); ++i)
@@ -195,6 +199,6 @@ void get_anchors(int img_height, int img_width, Config config)
         backbone_shapes.push_back(make_pair(ceil((float) img_height/config.BACKBONE_STRIDES[i]),
                                             ceil((float) img_width/config.BACKBONE_STRIDES[i])));
     }
-    //auto a =
-    generate_pyramid_anchors(config,backbone_shapes);
+    Mat a = generate_pyramid_anchors(config,backbone_shapes);
+    return a;
 }

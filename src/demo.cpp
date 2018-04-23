@@ -26,7 +26,8 @@ int main( int argc, char** argv )
 
     Mat molded_image = image.clone();
     mold_image(molded_image, myConfig);
-    get_anchors(molded_image.rows, molded_image.cols, myConfig);
+    Mat anchors = get_anchors(molded_image.rows, molded_image.cols, myConfig);
+    cout<<"anchor[3]"<<anchors.col(4)<<endl;
     cvtColor(image, image, COLOR_RGB2BGR);
 
     namedWindow( "Display window", WINDOW_AUTOSIZE ); // Create a window for display.
