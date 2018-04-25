@@ -50,7 +50,7 @@ pair<float, vector<int> > resize_image(Mat& image, int min_dim, int max_dim){
     return make_pair(scale, window);
 }
 
-Mat mold_image(Mat& image, Config config)
+pair<Mat, vector<int> > mold_image(Mat& image, Config config)
 {
     float orig_dim[] = {0, image.rows, image.cols, image.channels()};
     pair<float, vector<int> > scale_window = resize_image(image, config.IMAGE_MIN_DIM, config.IMAGE_MAX_DIM);
@@ -62,7 +62,7 @@ Mat mold_image(Mat& image, Config config)
     image_meta.push_back(scale_window.first);
     vector<float> active_classes(config.NUM_CLASSES, 0);
     image_meta.insert(image_meta.end(), active_classes.begin(), active_classes.end());
-    return Mat(1,image_meta.size(), CV_32FC1,image_meta.data());
+    return make_pair(Mat(1,image_meta.size(), CV_32FC1,image_meta.data()), scale_window.second);
 }
 
 Mat generate_anchors(int scale, pair<int, int> shape,
@@ -142,3 +142,6 @@ Mat get_anchors(int img_height, int img_width, Config config)
 
     return a;
 }
+
+//vector<Mat> unmold_detections(detections, mrcnn_mask, original_image_shape,
+//                      image_shape, window)

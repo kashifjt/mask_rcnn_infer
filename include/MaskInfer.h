@@ -52,6 +52,8 @@ public:
   Status ReadLabelsFile(const string& file_name);
   void SetConfig(Config config);
   Status LoadGraph(const string& file_name);
-  void infer(Mat& image, Mat& image_meta, Mat& image_anchors);
+  vector<Tensor> infer(Mat& image, Mat& image_meta, Mat& image_anchors);
+  Status PrintLabels(Tensor& classTensor);
+  void tensor_to_cvmat(Tensor& inTensor, int MatType=CV_32FC1, bool IgnoreFirstDim = false, bool LastDimChannel=false);
 };
 #endif

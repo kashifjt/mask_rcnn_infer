@@ -26,7 +26,7 @@ int main( int argc, char** argv )
     image.convertTo(image, 5);
 
     Mat molded_image = image.clone();
-    Mat image_meta = mold_image(molded_image, myConfig);
+    auto image_meta = mold_image(molded_image, myConfig);
     Mat image_anchors = get_anchors(molded_image.rows, molded_image.cols, myConfig);
     cout<<"anchors rows: "<<image_anchors.rows<<", anchors cols: "<<image_anchors.cols<<endl;
     cout<<"anchor[1000]: "<<image_anchors.row(1000)<<endl;
@@ -49,7 +49,15 @@ int main( int argc, char** argv )
     string model_path = "model/mrcnn_model.pb";
     infer.ReadLabelsFile(labels_path);
     infer.LoadGraph(model_path);
-    infer.infer(molded_image, image_meta, image_anchors);
-
+    auto out = infer.infer(molded_image, image_meta.first, image_anchors);
+    infer.PrintLabels(out[1]);
+    cout<<"Tensor(0): "<<endl;
+    infer.tensor_to_cvmat(out[0], CV_32FC1, true);
+    cout<<"Tensor(1): "<<endl;
+    infer.tensor_to_cvmat(out[1], CV_32FC1, true);
+    cout<<"Tensor(2): "<<endl;
+    infer.tensor_to_cvmat(out[2], CV_32FC1, true);
+    cout<<"Tensor(3): "<<endl;
+    infer.tensor_to_cvmat(out[3], CV_32FC1, true);
     return 0;
 }
