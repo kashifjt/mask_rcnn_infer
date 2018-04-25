@@ -52,6 +52,6 @@ public:
   Status ReadLabelsFile(const string& file_name);
   void SetConfig(Config config);
   Status LoadGraph(const string& file_name);
-  vector<Tensor> infer(Mat& image, Mat& image_meta, Mat& image_anchors);
+  void infer(Mat& image, Mat& image_meta, Mat& image_anchors);
 };
 #endif

@@ -58,20 +58,30 @@ std::vector<float> ConvertImageToVector(Mat& image) {
   return image_value;
  }
 
-vector<Tensor> MaskInfer::infer(Mat& image, Mat& image_meta, Mat& image_anchors)
+//vector<Tensor>
+void MaskInfer::infer(Mat& image, Mat& image_meta, Mat& image_anchors)
 {
   cout<<"image shape: "<<image.size()<<endl;
   cout<<"image_meta shape: "<<image_meta.size()<<endl;
   cout<<"image_anchors shape: "<<image_anchors.size()<<endl;
-  auto vec = ConvertImageToVector(image);
-  Tensor input_image(DT_FLOAT, TensorShape({1,image.rows,image.cols,image.channels()}));
-  copy_n(vec.begin(), vec.size(), input_image.flat<float>().data());
-  Tensor input_image_meta(DT_FLOAT, TensorShape({1,image_meta.rows,image_meta.cols,image_meta.channels()}));
-  auto vec = ConvertImageToVector(image_meta);
-  Tensor input_image_meta(DT_FLOAT, TensorShape({1,image_meta.rows,image_meta.cols,image_meta.channels()}));
 
-  // StringPiece tmp_input_image_data = input_image.tensor_data();
-  // memcpy(const_cast<char*>(tmp_input_image_data.data()), (image.data), image.rows * image.cols * image.channels() * sizeof(float));
+  Tensor input_image(DT_FLOAT, TensorShape({1,image.rows,image.cols,image.channels()}));
+  float * p = input_image.flat<float>().data();
+  Mat fakeImage(image.rows, image.cols, CV_32FC3, p);
+  image.convertTo(fakeImage, CV_32FC3);
+
+//  vector<float> vec_image = ConvertImageToVector(image);
+//  vector<float> vec_image_meta = ConvertImageToVector(image_meta);
+//  vector<float> vec_image_anchors = ConvertImageToVector(image_anchors);
+//  Tensor input_image(DT_FLOAT, TensorShape({1,image.rows,image.cols,image.channels()}));
+//  copy_n(vec_image.begin(), vec_image.size(), input_image.flat<float>().data());
+//  Tensor input_image_meta(DT_FLOAT, TensorShape({1,image_meta.rows,image_meta.cols,image_meta.channels()}));
+//  copy_n(vec_image_meta.begin(), vec_image_meta.size(), input_image_meta.flat<float>().data());
+//  Tensor input_image_anchors(DT_FLOAT, TensorShape({1,image_anchors.rows,image_anchors.cols,image_anchors.channels()}));
+//  copy_n(vec_image_anchors.begin(), vec_image_anchors.size(), input_image_anchors.flat<float>().data());
+//
+//  StringPiece tmp_input_image_data = input_image.tensor_data();
+//  memcpy(const_cast<char*>(tmp_input_image_data.data()), (image.data), image.rows * image.cols * image.channels() * sizeof(float));
   // Tensor input_image_meta(DT_FLOAT, TensorShape({1,image_meta.rows,image_meta.cols,image_meta.channels()}));
   // StringPiece tmp_input_image_meta_data = input_image_meta.tensor_data();
   // memcpy(const_cast<char*>(tmp_input_image_meta_data.data()), (image_meta.data), image_meta.rows * image_meta.cols * sizeof(float));
@@ -107,8 +117,8 @@ vector<Tensor> MaskInfer::infer(Mat& image, Mat& image_meta, Mat& image_anchors)
                                                //{in_image_meta_nm, input_image_meta},
                                                //{in_image_anchors_nm, input_image_anchors}},
                                                {output_layer}, {}, &outputs);
-  if (!run_status.ok()) {
-     LOG(ERROR) << "Running model failed: " << run_status;
-     }
-  return outputs;
+//  if (!run_status.ok()) {
+//     LOG(ERROR) << "Running model failed: " << run_status;
+//     }
+//  return outputs;
 }
