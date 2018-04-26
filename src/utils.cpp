@@ -45,24 +45,24 @@ pair<float, vector<int> > resize_image(Mat& image, int min_dim, int max_dim){
     int left_pad = (max_dim - w) / 2;
     int right_pad = max_dim - w - left_pad;
     copyMakeBorder(image, image, top_pad, bottom_pad, left_pad, right_pad, cv::BORDER_CONSTANT, 0);
-    int arr[] = {top_pad, left_pad, h + top_pad, w + left_pad};
-    vector<int> window(arr, arr + sizeof(arr) / sizeof(arr[0]));
+    vector<int> window;
+    window.push_back(top_pad); window.push_back(left_pad); window.push_back(h + top_pad); window.push_back(w + left_pad);
     return make_pair(scale, window);
 }
 
 pair<Mat, vector<int> > mold_image(Mat& image, Config config)
 {
-    float orig_dim[] = {0, image.rows, image.cols, image.channels()};
+    float orig_dim[] = {0.0, (float) image.rows, (float) image.cols, (float) image.channels()};
     pair<float, vector<int> > scale_window = resize_image(image, config.IMAGE_MIN_DIM, config.IMAGE_MAX_DIM);
-    Scalar s(config.MEAN_PIXEL[0], config.MEAN_PIXEL[1], config.MEAN_PIXEL[2]);
-    subtract(image, s, image);
+    Scalar ch_mean(config.MEAN_PIXEL[0], config.MEAN_PIXEL[1], config.MEAN_PIXEL[2]);
+    subtract(image, ch_mean, image);
     vector<float> image_meta(orig_dim, orig_dim + sizeof(orig_dim) / sizeof(orig_dim[0]));
     image_meta.push_back(image.rows); image_meta.push_back(image.cols); image_meta.push_back(image.channels());
     image_meta.insert(image_meta.end(), scale_window.second.begin(), scale_window.second.end());
     image_meta.push_back(scale_window.first);
     vector<float> active_classes(config.NUM_CLASSES, 0);
     image_meta.insert(image_meta.end(), active_classes.begin(), active_classes.end());
-    return make_pair(Mat(1,image_meta.size(), CV_32FC1,image_meta.data()), scale_window.second);
+    return make_pair(Mat (1,image_meta.size(), CV_32FC1,image_meta.data()).clone(), scale_window.second);
 }
 
 Mat generate_anchors(int scale, pair<int, int> shape,
@@ -131,7 +131,7 @@ Mat get_anchors(int img_height, int img_width, Config config)
     transpose(a, a); //Correct reshape(1,1) affect
 
     //Normalize Box
-    float scale[4] = {img_height - 1, img_width - 1, img_height - 1, img_width - 1};
+    float scale[4] = {(float)img_height - 1, (float)img_width - 1, (float)img_height - 1, (float)img_width - 1};
     float shift[4] = {0, 0, 1, 1};
     Mat mat_shift = Mat(1, 4, CV_32FC1, &shift);
     Mat mat_scale = Mat(1, 4, CV_32FC1, &scale);
@@ -143,5 +143,10 @@ Mat get_anchors(int img_height, int img_width, Config config)
     return a;
 }
 
-//vector<Mat> unmold_detections(detections, mrcnn_mask, original_image_shape,
-//                      image_shape, window)
+void unmold_detections(Mat detections, Mat mrcnn_mask, Size original_image_shape,
+                      Size image_shape, vector<int> window)
+{
+    Mat nonZeros;
+    findNonZero(detections.col(4), nonZeros);
+    cout<<nonZeros;
+}

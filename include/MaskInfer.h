@@ -50,10 +50,9 @@ private:
 public:
   MaskInfer(Config myconfig);
   Status ReadLabelsFile(const string& file_name);
-  void SetConfig(Config config);
   Status LoadGraph(const string& file_name);
   vector<Tensor> infer(Mat& image, Mat& image_meta, Mat& image_anchors);
   Status PrintLabels(Tensor& classTensor);
-  void tensor_to_cvmat(Tensor& inTensor, int MatType=CV_32FC1, bool IgnoreFirstDim = false, bool LastDimChannel=false);
+  Mat tensor_to_cvmat(Tensor& inTensor, int MatType=CV_32FC1, bool IgnoreFirstDim = false, bool LastDimChannel=false);
 };
 #endif

@@ -1,0 +1,38 @@
+### Different methods to initialize tensorflow tensor in C++
+//  vector<float> vec_image = ConvertImageToVector(image);
+//  vector<float> vec_image_meta = ConvertImageToVector(image_meta);
+//  vector<float> vec_image_anchors = ConvertImageToVector(image_anchors);
+//  Tensor input_image(DT_FLOAT, TensorShape({1,image.rows,image.cols,image.channels()}));
+//  copy_n(vec_image.begin(), vec_image.size(), input_image.flat<float>().data());
+//  Tensor input_image_meta(DT_FLOAT, TensorShape({1,image_meta.rows,image_meta.cols,image_meta.channels()}));
+//  copy_n(vec_image_meta.begin(), vec_image_meta.size(), input_image_meta.flat<float>().data());
+//  Tensor input_image_anchors(DT_FLOAT, TensorShape({1,image_anchors.rows,image_anchors.cols,image_anchors.channels()}));
+//  copy_n(vec_image_anchors.begin(), vec_image_anchors.size(), input_image_anchors.flat<float>().data());
+//
+//  StringPiece tmp_input_image_data = input_image.tensor_data();
+//  memcpy(const_cast<char*>(tmp_input_image_data.data()), (image.data), image.rows * image.cols * image.channels() * sizeof(float));
+  // Tensor input_image_meta(DT_FLOAT, TensorShape({1,image_meta.rows,image_meta.cols,image_meta.channels()}));
+  // StringPiece tmp_input_image_meta_data = input_image_meta.tensor_data();
+  // memcpy(const_cast<char*>(tmp_input_image_meta_data.data()), (image_meta.data), image_meta.rows * image_meta.cols * sizeof(float));
+  // Tensor input_image_anchors(DT_FLOAT, TensorShape({1,image_anchors.rows,image_anchors.cols,image_anchors.channels()}));
+  // StringPiece tmp_input_image_anchors_data = input_image_anchors.tensor_data();
+  // memcpy(const_cast<char*>(tmp_input_image_anchors_data.data()), (image_anchors.data), image_anchors.rows * image_anchors.cols * sizeof(float));
+  // auto root = tensorflow::Scope::NewRootScope();
+  // auto sh = tensorflow::ops::Shape(root, input_image);
+//   int height = image.rows;
+//   int width = image.cols;
+//   int depth = image.channels();
+//
+//   Tensor input_image(DT_FLOAT, TensorShape({1,image.rows,image.cols,image.channels()}));
+//   auto input_tensor_mapped = input_image.tensor<float, 4>();
+//   auto source_data = image.data;
+//   for (int y = 0; y < height; ++y) {
+//     const float* source_row = source_data + (y * width * depth);
+//     for (int x = 0; x < width; ++x) {
+//         const float* source_pixel = source_row + (x * depth);
+//         for (int c = 0; c < depth; ++c) {
+//            const float* source_value = source_pixel + c;
+//            input_tensor_mapped(0, y, x, c) = *source_value;
+//         }
+//     }
+// }

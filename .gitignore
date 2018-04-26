@@ -3,3 +3,9 @@
 cmake-build-debug/
 
 build/
+
+data/
+
+labels/
+
+model/
