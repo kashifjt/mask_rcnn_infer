@@ -53,9 +53,9 @@ vector<Tensor> MaskInfer::infer(Mat& image, Mat& image_meta, Mat& image_anchors)
     Mat fake_image_anchors(image_anchors.rows, image_anchors.cols, CV_32FC1, a);
     image_anchors.convertTo(fake_image_anchors, CV_32FC1);
 
-    string in_image_nm = "input_image_1";
-    string in_image_meta_nm = "input_image_meta_1";
-    string in_image_anchors_nm = "input_anchors_1";
+    string in_image_nm = "input_image";
+    string in_image_meta_nm = "input_image_meta";
+    string in_image_anchors_nm = "input_anchors";
     string output_layer_detection = "output_detections";
     string output_layer_class = "output_mrcnn_class";
     string output_layer_bbox = "output_mrcnn_bbox";

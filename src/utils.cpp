@@ -143,10 +143,107 @@ Mat get_anchors(int img_height, int img_width, Config config)
     return a;
 }
 
+void norm_boxes(Mat& inMat, float img_height, float img_width)
+{
+    float scale[4] = {img_height - 1, img_width - 1, img_height - 1, img_width - 1};
+    float shift[4] = {0, 0, 1, 1};
+    Mat mat_shift = Mat(1, 4, CV_32FC1, &shift);
+    Mat mat_scale = Mat(1, 4, CV_32FC1, &scale);
+
+    for (int i = 0; i < inMat.rows; ++i)
+    {
+        inMat.row(i) = (inMat.row(i) - mat_shift) / mat_scale;
+    }
+}
+
+void denorm_boxes(Mat& inMat, float img_height, float img_width)
+{
+    float scale[4] = {img_height - 1, img_width - 1, img_height - 1, img_width - 1};
+    float shift[4] = {0, 0, 1, 1};
+    Mat mat_shift = Mat(1, 4, CV_32FC1, &shift);
+    Mat mat_scale = Mat(1, 4, CV_32FC1, &scale);
+
+    for (int i = 0; i < inMat.rows; ++i)
+    {
+        inMat.row(i) = inMat.row(i).mul(mat_scale) + mat_shift;
+    }
+    inMat.convertTo(inMat, CV_32SC1);
+}
+
+Mat unmold_mask(Mat mask, Mat det_box, Size original_image_shape)
+{
+    Mat class_mask = mask.clone();
+    float threshold = 0.5;
+    int y1 = det_box.at<int>(0,0), x1 = det_box.at<int>(0,1),
+        y2 = det_box.at<int>(0,2), x2 = det_box.at<int>(0,3);
+    resize(class_mask, class_mask, Size(x2 - x1, y2 - y1));
+    cv::threshold(class_mask, class_mask, 0.5, 1, THRESH_BINARY);
+
+    Mat full_mask = Mat(original_image_shape,CV_32FC1, 0.0);
+    class_mask.copyTo(full_mask(Range(y1, y2), Range(x1, x2)));
+//    namedWindow( "Display window", WINDOW_AUTOSIZE ); // Create a window for display.
+//    imshow( "Display window", full_mask);                // Show our image inside it.
+//    waitKey(0); // Wait for a keystroke in the window
+    return full_mask;
+}
+
 void unmold_detections(Mat detections, Mat mrcnn_mask, Size original_image_shape,
                       Size image_shape, vector<int> window)
 {
     Mat nonZeros;
-    findNonZero(detections.col(4), nonZeros);
-    cout<<nonZeros;
+    Mat det_tmp = detections.col(4).clone();
+    divide(det_tmp, det_tmp, det_tmp);
+    det_tmp = (det_tmp - 1) * -1;
+    det_tmp.convertTo(det_tmp, CV_8UC1);
+    findNonZero(det_tmp, nonZeros);
+    int zero_ix = nonZeros.rows > 0 ? nonZeros.at<int>(0,1) : detections.rows;
+    cout<<detections<<endl;
+    auto det_boxes = detections(Range(0, zero_ix), Range(0,4));
+    auto class_ids = detections(Range(0, zero_ix), Range(4,5));
+    auto class_scores = detections(Range(0, zero_ix), Range(5,6));
+
+    //Normalize Window
+    float img_height = image_shape.height;
+    float img_width = image_shape.width;
+    Mat mat_window = Mat(1, 4, CV_32SC1, window.data());
+    mat_window.convertTo(mat_window, CV_32FC1);
+    norm_boxes(mat_window, img_height, img_width);
+
+    float wy1 = mat_window.at<float>(0,0), wx1 = mat_window.at<float>(0,1),
+          wy2 = mat_window.at<float>(0,2), wx2 = mat_window.at<float>(0,3);
+
+    float shift[4] = {wy1, wx1, wy1, wx1};
+    Mat mat_shift = Mat(1, 4, CV_32FC1, &shift);
+    float scale[4] = {wy2 - wy1, wx2 - wx1, wy2 - wy1, wx2 - wx1};
+    Mat mat_scale = Mat(1, 4, CV_32FC1, &scale);
+
+    for (int i = 0; i < det_boxes.rows; ++i)
+    {
+        det_boxes.row(i) = (det_boxes.row(i) - mat_shift) / mat_scale;
+    }
+
+    denorm_boxes(det_boxes, original_image_shape.height, original_image_shape.width);
+
+    auto fin_boxes = Mat(0, det_boxes.cols, det_boxes.type());
+    auto fin_class_ids = Mat(0, class_ids.cols, class_ids.type());
+    auto fin_class_scores = Mat(0, class_scores.cols, class_scores.type());
+    vector<Mat> fin_masks;
+
+    for(int i = 0; i < class_ids.rows; ++i)
+    {
+        if(((det_boxes.at<int>(i,2)-det_boxes.at<int>(i,0)) * (det_boxes.at<int>(i,3)-det_boxes.at<int>(i,1))) > 0)
+        {
+            fin_boxes.push_back(det_boxes.row(i));
+            fin_class_ids.push_back(class_ids.row(i));
+            fin_class_scores.push_back(class_scores.row(i));
+            Matx<Vec<float, 81>, 28, 28> curr_mask = mrcnn_mask.at<Matx<Vec<float, 81>, 28, 28> >(i);
+            Mat class_masks[81];
+            split(Mat(28, 28, CV_32FC(81), &curr_mask), class_masks);
+            int cls = class_ids.at<float>(i);
+            fin_masks.push_back(unmold_mask(class_masks[cls], det_boxes.row(i), original_image_shape));
+        }
+    }
+    cout<<"boxes: "<<endl<<fin_boxes<<endl;
+    cout<<"class_ids: "<<endl<<fin_class_ids<<endl;
+    cout<<"class_scores: "<<endl<<fin_class_scores<<endl;
 }
